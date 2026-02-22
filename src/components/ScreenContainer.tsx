@@ -7,7 +7,7 @@ type ScreenContainerProps = {
 
 export const ScreenContainer: React.FC<ScreenContainerProps> = ({ children }) => (
   <>
-    <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <StatusBar barStyle="light-content" backgroundColor="#0C0F18" />
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0C0F18" }}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"

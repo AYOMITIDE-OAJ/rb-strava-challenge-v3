@@ -134,7 +134,7 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
   if (isRestoring) {
     return (
       <View style={styles.centeredDark}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <StatusBar barStyle="light-content" backgroundColor="#0C0F18" />
         <ActivityIndicator size="large" color={LIME} />
         <Text style={styles.restoringText}>Restoring session…</Text>
       </View>
@@ -144,7 +144,7 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
   if (!accessToken) {
     return (
       <View style={styles.onboardingRoot}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <StatusBar barStyle="light-content" backgroundColor="#0C0F18" />
         <Image
           source={require("../../assets/image.jpg")}
           style={StyleSheet.absoluteFillObject}
@@ -229,7 +229,7 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
 
   return (
     <View style={styles.listRoot}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" backgroundColor="#0C0F18" />
 
       {/* ── Header — pushed well below status bar via insets.top ── */}
       <Animated.View
