@@ -10,6 +10,7 @@ import { StravaActivitySummary, LapStats } from "../types/strava";
 import { formatDateTime, formatDistanceKm, formatMinutes } from "../utils/formatters";
 import { buildLapStats } from "../utils/lapStats";
 
+const lapStatsCache = new Map<number, LapStats[]>();
 
 const getActivityIcon = (
   type: string
@@ -55,7 +56,11 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
 
   const loadDetails = useCallback(async () => {
     if (!accessToken) return;
-    setDetailsLoading(true);
+    const cached = lapStatsCache.get(activity.id);
+    if (cached) {
+      setLapStats(cached);
+    }
+    setDetailsLoading(!cached);
     setDetailsError(null);
     try {
       const detail = await fetchActivityDetail(accessToken, activity.id);
@@ -63,8 +68,11 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
         const streams = await fetchActivityStreams(accessToken, activity.id);
         const stats = buildLapStats(detail.laps || [], streams);
         setLapStats(stats);
+        lapStatsCache.set(activity.id, stats);
       } catch {
-        setLapStats([]);
+        if (!cached) {
+          setLapStats([]);
+        }
       }
     } catch (error: any) {
       setDetailsError(error?.message || "Unable to load activity details");
