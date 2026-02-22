@@ -1,0 +1,18 @@
+import { useEffect } from "react";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+
+WebBrowser.maybeCompleteAuthSession();
+
+const ExpoAuthSessionRedirect = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Immediately return to the app root after the auth redirect.
+    router.replace("/");
+  }, [router]);
+
+  return null;
+};
+
+export default ExpoAuthSessionRedirect;

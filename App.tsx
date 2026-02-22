@@ -1,79 +1,31 @@
-import React, { useCallback, useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useState } from "react";
 import * as WebBrowser from "expo-web-browser";
-import {
-  exchangeCodeAsync,
-  makeRedirectUri,
-  useAuthRequest,
-} from "expo-auth-session";
+import { StravaAuthProvider } from "./src/context/StravaAuthContext";
+import { ActivitiesScreen } from "./src/screens/ActivitiesScreen";
+import { ActivityDetailsScreen } from "./src/screens/ActivityDetailsScreen";
+import { StravaActivitySummary } from "./src/types/strava";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const STRAVA_CONFIG = {
-  authorizationEndpoint: "https://www.strava.com/oauth/mobile/authorize",
-  tokenEndpoint: "https://www.strava.com/oauth/token",
-  revocationEndpoint: "https://www.strava.com/oauth/deauthorize",
-};
-
-const STRAVA_CLIENT_ID = "3119"; // Add your client id here
-const STRAVA_CLIENT_SECRET = "ebe76760b27637e2f72da2b54f63894289e6dbcb"; // Add your client secret here;
-const STRAVA_REDIRECT_URI = makeRedirectUri({
-  scheme: "myapp",
-  preferLocalhost: true,
-  path: "oauth",
-});
-
 const App = () => {
-  const [request, response, promtAsync] = useAuthRequest(
-    {
-      clientId: STRAVA_CLIENT_ID,
-      clientSecret: STRAVA_CLIENT_SECRET,
-      scopes: ["activity:read_all,activity:write"],
-      redirectUri: STRAVA_REDIRECT_URI,
-    },
-    STRAVA_CONFIG
-  );
+  const [selectedActivity, setSelectedActivity] = useState<StravaActivitySummary | null>(null);
 
-  const onPressStravaAuth = useCallback(async () => {
-    if (request) {
-      await promtAsync();
-      if (response?.type === "success") {
-        const { code } = response.params;
-        const exchangeResponse = await exchangeCodeAsync(
-          {
-            clientId: STRAVA_CLIENT_ID,
-            code,
-            redirectUri: STRAVA_REDIRECT_URI,
-            extraParams: {
-              client_secret: STRAVA_CLIENT_SECRET,
-            },
-          },
-          { tokenEndpoint: STRAVA_CONFIG.tokenEndpoint }
-        );
-        console.log("token", exchangeResponse);
-      }
-    }
-  }, [request, response, promtAsync]);
+  const handleSelectActivity = useCallback((activity: StravaActivitySummary) => {
+    setSelectedActivity(activity);
+  }, []);
+
+  const handleBackToActivities = useCallback(() => {
+    setSelectedActivity(null);
+  }, []);
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      style={{ padding: 16, flex: 1 }}
-      contentContainerStyle={{ flex: 1 }}
-    >
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <TouchableOpacity
-          onPress={onPressStravaAuth}
-          style={{
-            backgroundColor: "#161616",
-            borderRadius: 4,
-            padding: 16,
-          }}
-        >
-          <Text style={{ color: "#FFF" }}>Strava Auth</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    <StravaAuthProvider>
+      {selectedActivity ? (
+        <ActivityDetailsScreen activity={selectedActivity} onBack={handleBackToActivities} />
+      ) : (
+        <ActivitiesScreen onSelectActivity={handleSelectActivity} />
+      )}
+    </StravaAuthProvider>
   );
 };
 

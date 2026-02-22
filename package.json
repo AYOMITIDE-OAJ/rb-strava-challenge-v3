@@ -1,7 +1,7 @@
 {
   "name": "rb-strava-challenge-v3",
   "version": "1.0.0",
-  "main": "expo/AppEntry.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -13,11 +13,16 @@
     "expo": "~51.0.28",
     "expo-auth-session": "~5.5.2",
     "expo-crypto": "~13.0.2",
+    "expo-font": "~12.0.10",
+    "expo-linear-gradient": "~13.0.2",
+    "expo-router": "~3.5.23",
+    "expo-secure-store": "~13.0.2",
     "expo-status-bar": "~1.12.1",
     "expo-updates": "~0.25.24",
     "expo-web-browser": "~13.0.3",
     "react": "18.2.0",
     "react-native": "0.74.5",
+    "react-native-screens": "3.31.1",
     "typescript": "~5.3.3"
   },
   "devDependencies": {
