@@ -87,7 +87,7 @@ const PulseDot = () => {
 };
 
 export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActivity }) => {
-  const { accessToken, promptLogin, isAuthenticating, isRestoring, authError } =
+  const { accessToken, promptLogin, isAuthenticating, isRestoring, authError, logout } =
     useStravaAuth();
   const [activities, setActivities] = useState<StravaActivitySummary[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
@@ -134,7 +134,7 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
   if (isRestoring) {
     return (
       <View style={styles.centeredDark}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
         <ActivityIndicator size="large" color={LIME} />
         <Text style={styles.restoringText}>Restoring session…</Text>
       </View>
@@ -144,7 +144,7 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
   if (!accessToken) {
     return (
       <View style={styles.onboardingRoot}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
         <Image
           source={require("../../assets/image.jpg")}
           style={StyleSheet.absoluteFillObject}
@@ -229,7 +229,7 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
 
   return (
     <View style={styles.listRoot}>
-      <StatusBar barStyle="light-content" backgroundColor={DARK} />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       {/* ── Header — pushed well below status bar via insets.top ── */}
       <Animated.View
@@ -334,6 +334,15 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
             </Text>
           </View>
         )}
+
+        <TouchableOpacity
+          onPress={logout}
+          activeOpacity={0.8}
+          style={styles.logoutButton}
+        >
+          <MaterialCommunityIcons name="logout" size={16} color="#FFB4B4" />
+          <Text style={styles.logoutText}>Log out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -671,5 +680,26 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular",
     fontSize: 12,
     letterSpacing: 0.4,
+  },
+
+  logoutButton: {
+    marginTop: 16,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,68,68,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255,68,68,0.35)",
+  },
+  logoutText: {
+    color: "#FF8B8B",
+    fontFamily: "Montserrat-SemiBold",
+    fontSize: 12,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
 });

@@ -25,6 +25,7 @@ type StravaAuthContextValue = {
   isRestoring: boolean;
   authError: string | null;
   promptLogin: () => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const StravaAuthContext = createContext<StravaAuthContextValue | undefined>(undefined);
@@ -173,6 +174,16 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [exchangeCode]);
 
+  const logout = useCallback(async () => {
+    setAccessToken(null);
+    setAuthError(null);
+    try {
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    } catch (error) {
+      console.log("token-delete-error", error);
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       accessToken,
@@ -180,8 +191,9 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isRestoring,
       authError,
       promptLogin,
+      logout,
     }),
-    [accessToken, isAuthenticating, isRestoring, authError, promptLogin]
+    [accessToken, isAuthenticating, isRestoring, authError, promptLogin, logout]
   );
 
   return <StravaAuthContext.Provider value={value}>{children}</StravaAuthContext.Provider>;
