@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 type SectionHeaderProps = {
   title: string;
@@ -8,16 +8,24 @@ type SectionHeaderProps = {
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, action }) => {
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 12,
-      }}
-    >
-      <Text style={{ fontSize: 18, fontWeight: "600" }}>{title}</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>{title}</Text>
       {action}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  title: {
+    color: "#F0F2F5",
+    fontSize: 18,
+    fontFamily: "Montserrat-SemiBold",
+    letterSpacing: 0.2,
+  },
+});
