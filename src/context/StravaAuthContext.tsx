@@ -5,7 +5,6 @@ import {
   getDefaultReturnUrl,
 } from "expo-auth-session";
 import Constants from "expo-constants";
-import sessionUrlProvider from "expo-auth-session/build/SessionUrlProvider";
 import * as WebBrowser from "expo-web-browser";
 import * as SecureStore from "expo-secure-store";
 import {
@@ -18,6 +17,15 @@ import {
 } from "../constants/strava";
 
 const ACCESS_TOKEN_KEY = "strava_access_token";
+const AUTH_PROXY_BASE = "https://auth.expo.io";
+
+const buildProxyStartUrl = (authUrl: string, returnUrl: string, projectName: string): string => {
+  const params = new URLSearchParams({ authUrl, returnUrl });
+  return `${AUTH_PROXY_BASE}/${projectName}/start?${params.toString()}`;
+};
+
+const extractErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
 
 type StravaAuthContextValue = {
   accessToken: string | null;
@@ -31,9 +39,6 @@ type StravaAuthContextValue = {
 const StravaAuthContext = createContext<StravaAuthContextValue | undefined>(undefined);
 
 export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  console.log("strava-auth-redirect-uri", STRAVA_REDIRECT_URI);
-  console.log("strava-auth-use-proxy", STRAVA_USE_AUTH_PROXY);
-  console.log("strava-auth-proxy-project", STRAVA_PROXY_PROJECT);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -48,8 +53,8 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (isMounted && storedToken) {
           setAccessToken(storedToken);
         }
-      } catch (error) {
-        console.log("token-restore-error", error);
+      } catch {
+        // Token restore failed — user will be prompted to log in
       } finally {
         if (isMounted) {
           setIsRestoring(false);
@@ -80,18 +85,15 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           },
           { tokenEndpoint: STRAVA_CONFIG.tokenEndpoint }
         );
-        console.log("strava-exchange-response", exchangeResponse);
-        const token =
-          (exchangeResponse as any)?.access_token ||
-          (exchangeResponse as any)?.accessToken;
-        if (token) {
+        const responseRecord = exchangeResponse as unknown as Record<string, unknown>;
+        const token = responseRecord.access_token ?? responseRecord.accessToken;
+        if (typeof token === "string" && token) {
           setAccessToken(token);
-          await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
         } else {
           setAuthError("Strava authentication failed.");
         }
-      } catch (error: any) {
-        setAuthError(error?.message || "Unable to authenticate with Strava");
+      } catch (error: unknown) {
+        setAuthError(extractErrorMessage(error, "Unable to authenticate with Strava"));
       } finally {
         setIsAuthenticating(false);
       }
@@ -108,7 +110,9 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     };
 
-    persist().catch((error) => console.log("token-persist-error", error));
+    persist().catch(() => {
+      // Persistence failure is non-critical — token still lives in memory
+    });
   }, [accessToken]);
 
   const promptLogin = useCallback(async () => {
@@ -138,20 +142,12 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       `&client_id=${encodeURIComponent(STRAVA_CLIENT_ID)}` +
       `&response_type=code` +
       `&state=${encodeURIComponent(state)}`;
-    const proxyStartUrl = sessionUrlProvider.getStartUrl(
-      authUrl,
-      returnUrl,
-      STRAVA_PROXY_PROJECT
-    );
+    const proxyStartUrl = buildProxyStartUrl(authUrl, returnUrl, STRAVA_PROXY_PROJECT);
 
-    console.log("strava-auth-request-url", authUrl);
-    console.log("strava-auth-return-url", returnUrl);
-    console.log("strava-auth-start-url", proxyStartUrl);
     setAuthError(null);
     setIsAuthenticating(true);
     try {
       const result = await WebBrowser.openAuthSessionAsync(proxyStartUrl, returnUrl);
-      console.log("strava-auth-prompt-result", result);
       if (result.type === "success" && result.url) {
         const query = result.url.includes("?") ? result.url.split("?")[1] : "";
         const params = new URLSearchParams(query);
@@ -168,8 +164,8 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
       setIsAuthenticating(false);
-    } catch (error: any) {
-      setAuthError(error?.message || "Unable to launch Strava auth");
+    } catch (error: unknown) {
+      setAuthError(extractErrorMessage(error, "Unable to launch Strava auth"));
       setIsAuthenticating(false);
     }
   }, [exchangeCode]);
@@ -179,8 +175,8 @@ export const StravaAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setAuthError(null);
     try {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-    } catch (error) {
-      console.log("token-delete-error", error);
+    } catch {
+      // Deletion failure is non-critical
     }
   }, []);
 

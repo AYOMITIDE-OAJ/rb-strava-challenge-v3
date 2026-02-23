@@ -1,32 +1,17 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityDetailsScreen } from "../../src/screens/ActivityDetailsScreen";
-import { StravaActivitySummary } from "../../src/types/strava";
 
 const ActivityDetailsRoute = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
-  const activity = useMemo<StravaActivitySummary | null>(() => {
-    const id = Number(params.id);
-    if (!id || Number.isNaN(id)) {
-      return null;
-    }
-    return {
-      id,
-      name: typeof params.name === "string" ? params.name : "Activity",
-      distance: Number(params.distance ?? 0),
-      moving_time: Number(params.moving_time ?? 0),
-      elapsed_time: 0,
-      start_date_local: typeof params.start_date_local === "string" ? params.start_date_local : "",
-    };
-  }, [params]);
-
-  if (!activity) {
+  const activityId = Number(id);
+  if (!activityId || Number.isNaN(activityId)) {
     return null;
   }
 
-  return <ActivityDetailsScreen activity={activity} onBack={() => router.back()} />;
+  return <ActivityDetailsScreen activityId={activityId} onBack={() => router.back()} />;
 };
 
 export default ActivityDetailsRoute;

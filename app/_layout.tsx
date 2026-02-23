@@ -7,6 +7,12 @@ import { StravaAuthProvider } from "../src/context/StravaAuthContext";
 
 WebBrowser.maybeCompleteAuthSession();
 
+// Set default font family once at module level (not inside render)
+(Text as any).defaultProps = {
+  ...((Text as any).defaultProps || {}),
+  style: { fontFamily: "Montserrat-Regular" },
+};
+
 const RootLayout = () => {
   const [fontsLoaded] = useFonts({
     "Montserrat-Regular": require("../assets/fonts/Montserrat-Regular.ttf"),
@@ -24,11 +30,6 @@ const RootLayout = () => {
       </View>
     );
   }
-
-  if (!Text.defaultProps) {
-    Text.defaultProps = {};
-  }
-  Text.defaultProps.style = [{ fontFamily: "Montserrat-Regular" }, Text.defaultProps.style];
 
   return (
     <StravaAuthProvider>

@@ -20,13 +20,11 @@ export const fetchActivities = async (token: string) => {
   );
   if (!res.ok) {
     const text = await res.text();
-    console.log("strava-activities-error", res.status, text);
+    if (__DEV__) console.log("strava-activities-error", res.status, text);
     throw new Error("Failed to load activities");
   }
   const data = (await res.json()) as unknown;
-  const list = Array.isArray(data) ? (data as StravaActivitySummary[]) : [];
-  console.log("strava-activities-count", list.length);
-  return list;
+  return Array.isArray(data) ? (data as StravaActivitySummary[]) : [];
 };
 
 export const fetchActivityDetail = async (token: string, activityId: number) => {

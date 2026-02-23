@@ -6,84 +6,81 @@ import { LapCard } from "../components/LapCard";
 import { ScreenContainer } from "../components/ScreenContainer";
 import { SectionHeader } from "../components/SectionHeader";
 import { useStravaAuth } from "../context/StravaAuthContext";
-import { StravaActivitySummary, LapStats } from "../types/strava";
+import { StravaActivityDetail, LapStats } from "../types/strava";
 import { formatDateTime, formatDistanceKm, formatMinutes } from "../utils/formatters";
+import { getActivityColor, getActivityIcon } from "../utils/activityHelpers";
 import { buildLapStats } from "../utils/lapStats";
 
-const lapStatsCache = new Map<number, LapStats[]>();
-
-const getActivityIcon = (
-  type: string
-): keyof typeof MaterialCommunityIcons.glyphMap => {
-  const map: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
-    Run: "run",
-    Ride: "bike",
-    Swim: "swim",
-    Walk: "walk",
-    Hike: "hiking",
-    WeightTraining: "weight-lifter",
-    Yoga: "yoga",
-    Workout: "dumbbell",
-    Kayaking: "kayaking",
-    Soccer: "soccer",
-    Tennis: "tennis",
-  };
-  return map[type] ?? "flash";
-};
-const getActivityColor = (type: string): string => {
-  const map: Record<string, string> = {
-    Run: "#D7FF3F", Ride: "#3FD7FF", Swim: "#3F8EFF", Walk: "#A8FF3F",
-    Hike: "#FFB03F", WeightTraining: "#FF3F7A", Yoga: "#C03FFF", Workout: "#FF3F3F",
-  };
-  return map[type] ?? "#D7FF3F";
-};
-
-
 type ActivityDetailsScreenProps = {
-  activity: StravaActivitySummary;
+  activityId: number;
   onBack: () => void;
 };
 
-
-export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ activity, onBack }) => {
+export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ activityId, onBack }) => {
   const { accessToken } = useStravaAuth();
+  const [activity, setActivity] = useState<StravaActivityDetail | null>(null);
   const [lapStats, setLapStats] = useState<LapStats[]>([]);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
-
-  const accentColor = getActivityColor(activity.type ?? "");
-  const icon = getActivityIcon(activity.type ?? "");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadDetails = useCallback(async () => {
     if (!accessToken) return;
-    const cached = lapStatsCache.get(activity.id);
-    if (cached) {
-      setLapStats(cached);
-    }
-    setDetailsLoading(!cached);
-    setDetailsError(null);
+    setLoading(true);
+    setError(null);
     try {
-      const detail = await fetchActivityDetail(accessToken, activity.id);
+      const detail = await fetchActivityDetail(accessToken, activityId);
+      setActivity(detail);
       try {
-        const streams = await fetchActivityStreams(accessToken, activity.id);
-        const stats = buildLapStats(detail.laps || [], streams);
-        setLapStats(stats);
-        lapStatsCache.set(activity.id, stats);
+        const streams = await fetchActivityStreams(accessToken, activityId);
+        setLapStats(buildLapStats(detail.laps || [], streams));
       } catch {
-        if (!cached) {
-          setLapStats([]);
-        }
+        setLapStats([]);
       }
-    } catch (error: any) {
-      setDetailsError(error?.message || "Unable to load activity details");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to load activity details";
+      setError(message);
     } finally {
-      setDetailsLoading(false);
+      setLoading(false);
     }
-  }, [accessToken, activity.id]);
+  }, [accessToken, activityId]);
 
   useEffect(() => {
     loadDetails();
   }, [loadDetails]);
+
+  if (loading && !activity) {
+    return (
+      <ScreenContainer>
+        <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="chevron-left" size={22} color="#6B7280" />
+          <Text style={styles.backLabel}>Back to activities</Text>
+        </TouchableOpacity>
+        <ActivityIndicator style={{ marginTop: 40 }} size="large" color="#D7FF3F" />
+      </ScreenContainer>
+    );
+  }
+
+  if (error && !activity) {
+    return (
+      <ScreenContainer>
+        <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="chevron-left" size={22} color="#6B7280" />
+          <Text style={styles.backLabel}>Back to activities</Text>
+        </TouchableOpacity>
+        <View style={styles.errorBadge}>
+          <View style={styles.errorRow}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={14} color="#FF8B8B" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (!activity) return null;
+
+  const accentColor = getActivityColor(activity.type ?? "");
+  const icon = getActivityIcon(activity.type ?? "");
 
   const stats = [
     { icon: "map-marker-distance", label: "Distance", value: formatDistanceKm(activity.distance) },
@@ -102,13 +99,11 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
         <Text style={styles.backLabel}>Back to activities</Text>
       </TouchableOpacity>
 
-      {/* ── Hero card ── */}
+      {/* Hero card */}
       <View style={styles.heroCard}>
-        {/* Left accent bar */}
         <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
 
         <View style={styles.heroInner}>
-          {/* Header row */}
           <View style={styles.headerRow}>
             <View style={[styles.iconBadge, { backgroundColor: `${accentColor}1A` }]}>
               <MaterialCommunityIcons name={icon} size={20} color={accentColor} />
@@ -123,10 +118,8 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
             </View>
           </View>
 
-          {/* Divider */}
           <View style={styles.divider} />
 
-          {/* Stats grid */}
           <View style={styles.statsGrid}>
             {stats.map((s, i) => (
               <View key={i} style={styles.statCell}>
@@ -141,31 +134,14 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
         </View>
       </View>
 
-      {/* ── Laps section ── */}
+      {/* Laps section */}
       <SectionHeader title="Laps" />
-
-      {detailsLoading && (
-        <ActivityIndicator
-          style={styles.loader}
-          size="small"
-          color={accentColor}
-        />
-      )}
-
-      {detailsError && (
-        <View style={styles.errorBadge}>
-          <View style={styles.errorRow}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={14} color="#FF8B8B" />
-            <Text style={styles.errorText}>{detailsError}</Text>
-          </View>
-        </View>
-      )}
 
       {lapStats.map((lap) => (
         <LapCard key={lap.index} lap={lap} />
       ))}
 
-      {!detailsLoading && !detailsError && lapStats.length === 0 && (
+      {!loading && lapStats.length === 0 && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No lap data available for this activity.</Text>
         </View>
@@ -174,9 +150,7 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
   );
 };
 
-
 const styles = StyleSheet.create({
-  // Back button
   backButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -190,8 +164,6 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-SemiBold",
     letterSpacing: 0.3,
   },
-
-  // Hero card
   heroCard: {
     flexDirection: "row",
     backgroundColor: "#131720",
@@ -211,8 +183,6 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 12,
   },
-
-  // Header
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -242,14 +212,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
-
-  // Divider
   divider: {
     height: 1,
     backgroundColor: "rgba(255,255,255,0.05)",
   },
-
-  // Stats
   statsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -272,14 +238,10 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-
-  // Loader
   loader: {
     marginBottom: 12,
     alignSelf: "flex-start",
   },
-
-  // Error
   errorBadge: {
     backgroundColor: "rgba(255,60,60,0.1)",
     borderRadius: 8,
@@ -298,8 +260,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Montserrat-SemiBold",
   },
-
-  // Empty state
   emptyState: {
     paddingVertical: 20,
     alignItems: "center",
@@ -311,4 +271,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
-

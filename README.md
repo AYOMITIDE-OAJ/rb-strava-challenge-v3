@@ -51,21 +51,41 @@ Before you begin, make sure you have the following tools installed on your machi
 9. You are now ready to access the Strava api using your own application.
 
 
+## Environment Variables
+
+Create a `.env` file in the project root (use `.env.example` as a template):
+
+```bash
+cp .env.example .env
+```
+
+Then fill in the required values:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `EXPO_PUBLIC_STRAVA_CLIENT_ID` | Yes | Your Strava API Client ID (from step 7 above) |
+| `EXPO_PUBLIC_STRAVA_CLIENT_SECRET` | Yes | Your Strava API Client Secret (from step 7 above) |
+| `EXPO_PUBLIC_PROXY_PROJECT` | Yes | Your Expo project name, e.g. `@your-username/rb-strava-challenge-v3` |
+| `EXPO_PUBLIC_USE_AUTH_PROXY` | No | Set to `true` to use the Expo auth proxy (defaults to `true` in dev) |
+| `EXPO_PUBLIC_STRAVA_REDIRECT_URI` | No | Override the OAuth redirect URI (auto-derived if left blank) |
+| `EXPO_PUBLIC_DEV_HOST` | No | Override the dev server host (auto-detected if left blank) |
+
 ## Running the project
 
 1. Open terminal at the project root
 2. Run `npm install`
-3. Run `npx expo start`
-4. Press `i` to open the iOS simulator
-5. OR, Press `a` to open the Anroid simulator
+3. Ensure your `.env` file is configured (see above)
+4. Run `npx expo start`
+5. Press `i` to open the iOS simulator
+6. OR, Press `a` to open the Android simulator
 
 ### Strava Authentication
 
-Press `Strava auth` button on the simulator and it will take you through the Strava auth flow. 
+Press the **Connect with Strava** button on the simulator and it will take you through the Strava OAuth flow.
 
-Please use the email you entered in the above step to access either your own account, or your newly setup test account.
+Please use the email you entered in the setup step above to access either your own account, or your newly set up test account.
 
-Your accessToken will be printed to the console (which can be seen in your terminal on tab where you started your expo project, i.e `npx expo start`). You will use this accessToken to call the Strava API.
+Once authenticated, the app will fetch and display your Strava activities automatically. The access token is stored securely on-device via `expo-secure-store` and will persist across app restarts.
 
 <img height="400" alt="image" src="https://user-images.githubusercontent.com/5293650/199756290-3ca777b8-bc24-4088-a3c7-6d0bf3c2e254.png">
 

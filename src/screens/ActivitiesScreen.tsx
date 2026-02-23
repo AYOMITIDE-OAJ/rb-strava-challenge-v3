@@ -120,8 +120,8 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
     try {
       const data = await fetchActivities(accessToken);
       setActivities(data);
-    } catch (error: any) {
-      setActivitiesError(error?.message || "Unable to load activities");
+    } catch (error: unknown) {
+      setActivitiesError(error instanceof Error ? error.message : "Unable to load activities");
     } finally {
       setActivitiesLoading(false);
     }
