@@ -87,7 +87,7 @@ const PulseDot = () => {
 };
 
 export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActivity }) => {
-  const { accessToken, promptLogin, isAuthenticating, isRestoring, authError, logout } =
+  const { accessToken, promptLogin, isAuthenticating, isRestoring, authError, logout, getValidAccessToken } =
     useStravaAuth();
   const [activities, setActivities] = useState<StravaActivitySummary[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
@@ -118,14 +118,16 @@ export const ActivitiesScreen: React.FC<ActivitiesScreenProps> = ({ onSelectActi
     setActivitiesLoading(true);
     setActivitiesError(null);
     try {
-      const data = await fetchActivities(accessToken);
+      const token = await getValidAccessToken();
+      if (!token) return;
+      const data = await fetchActivities(token);
       setActivities(data);
     } catch (error: unknown) {
       setActivitiesError(error instanceof Error ? error.message : "Unable to load activities");
     } finally {
       setActivitiesLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, getValidAccessToken]);
 
   useEffect(() => {
     loadActivities();

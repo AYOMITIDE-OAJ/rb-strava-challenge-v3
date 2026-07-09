@@ -17,7 +17,7 @@ type ActivityDetailsScreenProps = {
 };
 
 export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ activityId, onBack }) => {
-  const { accessToken } = useStravaAuth();
+  const { accessToken, getValidAccessToken } = useStravaAuth();
   const [activity, setActivity] = useState<StravaActivityDetail | null>(null);
   const [lapStats, setLapStats] = useState<LapStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +28,12 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
     setLoading(true);
     setError(null);
     try {
-      const detail = await fetchActivityDetail(accessToken, activityId);
+      const token = await getValidAccessToken();
+      if (!token) return;
+      const detail = await fetchActivityDetail(token, activityId);
       setActivity(detail);
       try {
-        const streams = await fetchActivityStreams(accessToken, activityId);
+        const streams = await fetchActivityStreams(token, activityId);
         setLapStats(buildLapStats(detail.laps || [], streams));
       } catch {
         setLapStats([]);
@@ -42,7 +44,7 @@ export const ActivityDetailsScreen: React.FC<ActivityDetailsScreenProps> = ({ ac
     } finally {
       setLoading(false);
     }
-  }, [accessToken, activityId]);
+  }, [accessToken, activityId, getValidAccessToken]);
 
   useEffect(() => {
     loadDetails();
